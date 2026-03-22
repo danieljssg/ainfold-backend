@@ -2,6 +2,7 @@ import 'dotenv/config';
 import connectDb from './src/config/db.js';
 import logger from './src/config/logger.js';
 import './src/jobs/workers/main.worker.js';
+import './src/jobs/workers/analysis.worker.js';
 
 async function startWorker() {
   try {

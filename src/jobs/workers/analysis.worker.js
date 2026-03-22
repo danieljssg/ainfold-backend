@@ -1,45 +1,68 @@
 import { Worker } from 'bullmq';
 import logger from '../../config/logger.js';
 import { WorkerConnection } from '../../config/redis.js';
-import User from '../../shared/models/User.js';
-import { processPdfText } from '../../shared/services/pdfService.js';
-import { analyzeResume } from '../../shared/services/aiService.js';
+import Job from '../../shared/models/Job.js';
+import { analyzeResume } from '../../shared/services/ai.service.js';
+import { processPdfText } from '../../shared/services/pdf.service.js';
 
 export const analysisWorker = new Worker(
   'analysisStream',
   async (job) => {
-    const { pdfBuffer, socketId } = job.data;
+    const { jobId, pdfBuffer, hobby, feel } = job.data;
 
     try {
-      // 1 & 2. Extracción
-      let { shouldOCR, content } = await processPdfText(pdfBuffer);
+      await Job.findByIdAndUpdate(jobId, {
+        status: 'processing',
+        startedAt: new Date(),
+        $inc: { attempts: 1 },
+      });
+
+      const nodeBuffer = Buffer.from(pdfBuffer, 'base64');
+      const buffer = new Uint8Array(
+        nodeBuffer.buffer,
+        nodeBuffer.byteOffset,
+        nodeBuffer.byteLength,
+      );
+
+      const { shouldOCR, content } = await processPdfText(buffer);
 
       if (shouldOCR) {
-        // 3. Callback OCR (Opcional para la demo)
-        // content = await runTesseract(pdfBuffer);
-        throw new Error('El PDF requiere OCR, no soportado en esta demo rápida.');
+        await Job.findByIdAndUpdate(jobId, {
+          status: 'failed',
+          error: 'El PDF es un documento escaneado y no contiene texto extraíble.',
+          completedAt: new Date(),
+        });
+        return { success: false, reason: 'ocr_required' };
       }
 
-      // 4 & 5. Análisis LLM e Insight
-      const aiResult = await analyzeResume(content);
-      const resultData = JSON.parse(aiResult.choices[0].message.content);
+      const result = await analyzeResume(content, hobby, feel);
 
-      // 6. Guardar y Notificar
-      // await db.collection('cvs').insertOne({ ...resultData, createdAt: new Date() });
+      await Job.findByIdAndUpdate(jobId, { status: 'completed', result, completedAt: new Date() });
+      logger.info(`[analysisWorker] Job ${jobId} completado — ${result?.candidateData?.fullName}`);
 
-      // Emitir via socketId guardado en el job
-      io.to(socketId).emit('CV_READY', resultData);
-
-      return resultData;
-    } catch (error) {
-      io.to(socketId).emit('CV_ERROR', { message: error.message });
-      throw error;
+      return { success: true, jobId };
+    } catch (err) {
+      logger.error(`[analysisWorker] Error inesperado en job ${jobId}: ${err.message}`);
+      await Job.findByIdAndUpdate(jobId, {
+        status: 'failed',
+        error: err.message,
+        completedAt: new Date(),
+      }).catch(() => {});
+      throw err; // re-lanzar para que BullMQ gestione los reintentos
     }
   },
   {
     connection: WorkerConnection,
-    concurrency: 5,
+    concurrency: 3,
     removeOnComplete: { count: 100 },
     removeOnFail: { count: 500 },
   },
 );
+
+analysisWorker.on('completed', (job) => {
+  logger.info(`[analysisWorker] Job ${job.id} completado`);
+});
+
+analysisWorker.on('failed', (job, err) => {
+  logger.error(`[analysisWorker] Job ${job?.id} falló: ${err.message}`);
+});

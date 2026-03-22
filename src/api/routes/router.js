@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { doubleCsrfProtection, generateCsrfToken } from '../../config/csrfConfig.js';
 import { validateSign } from '../../modules/auth/auth.middleware.js';
 // Routes Definition
+import analyzeRoutes from '../../modules/analyze/analyze.routes.js';
 import authRoutes from '../../modules/auth/auth.routes.js';
 import userRoutes from '../../modules/users/user.routes.js';
 // Middlewares
@@ -15,6 +16,7 @@ router.get('/csrf-token', (req, res) => {
 });
 
 router.use('/auth', authRoutes);
+router.use('/analyze', analyzeRoutes);
 
 router.use(doubleCsrfProtection);
 router.use('/users', [validateSign, cacheMiddleware()], userRoutes);
