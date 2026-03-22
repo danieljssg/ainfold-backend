@@ -1,22 +1,22 @@
-export const analyzeResume = async (text) => {
-  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.OPENROUTER_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'openrouter/free',
-      messages: [
-        {
-          role: 'system',
-          content:
-            'Eres un experto en RH. Devuelve un JSON con: name, skills[], y ai_insight (máx 280 caracteres entusiasta).',
-        },
-        { role: 'user', content: text },
-      ],
-      response_format: { type: 'json_object' },
-    }),
+import { OpenRouter } from '@openrouter/sdk';
+
+const client = new OpenRouter({
+  apiKey: process.env.OPENROUTER_KEY,
+});
+
+export const analyzeResume = async (text, hobby = '', feel = 'dramatic') => {
+  const completion = await client.chat.send({
+    model: 'openrouter/free',
+    response_format: { type: 'json_object' },
+    plugins: [{ id: 'response-healing' }],
+    provider: { require_parameters: true },
+    max_tokens: 1000,
+    messages: [
+      { role: 'system', content: buildSystemPrompt(feel) },
+      { role: 'user', content: buildUserPrompt(text, hobby) },
+    ],
   });
-  return response.json();
+
+  const raw = completion.choices[0].message.content;
+  return JSON.parse(raw);
 };
