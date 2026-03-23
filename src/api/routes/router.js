@@ -16,10 +16,10 @@ router.get('/csrf-token', (req, res) => {
 });
 
 router.use('/auth', authRoutes);
-router.use('/analyze', analyzeRoutes);
 
 router.use(doubleCsrfProtection);
 router.use('/users', [validateSign, cacheMiddleware()], userRoutes);
+router.use('/analyze', [validateSign], analyzeRoutes);
 
 router.get('/', [validateSign], (_req, res) => {
   return res.status(200).json({ message: 'Welcome to the API' });

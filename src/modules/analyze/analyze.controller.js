@@ -1,6 +1,7 @@
 import multer from 'multer';
 import logger from '../../config/logger.js';
 import { addJobAnalysis } from '../../jobs/queues/main.queue.js';
+import Analysis from '../../shared/models/Analysis.js';
 import Job from '../../shared/models/Job.js';
 import { analyzeSchema } from '../../utils/validations/schemas/analyzeSchema.js';
 
@@ -12,6 +13,7 @@ const fileFilter = (_req, file, cb) => {
     cb(new Error('Solo se permiten archivos PDF'), false);
   }
 };
+
 export const uploadPdf = multer({
   storage,
   fileFilter,
@@ -26,23 +28,24 @@ export const submitAnalysis = async (req, res) => {
 
     const parsed = analyzeSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ success: false, errors: parsed.error.errors });
+      return res.status(400).json({ success: false, errors: parsed.error.flatten().fieldErrors });
     }
 
-    const { hobby, feel } = parsed.data;
+    const { candidateName, hobby } = parsed.data;
 
     const job = await Job.create({
       userId: req.user.id,
+      createdBy: req.user.id,
+      candidateName,
       hobby,
-      feel,
       status: 'pending',
     });
 
     await addJobAnalysis('ANALYZE_CV', {
       jobId: job._id.toString(),
       pdfBuffer: req.file.buffer.toString('base64'),
+      candidateName,
       hobby,
-      feel,
     });
 
     return res.status(201).json({
@@ -60,7 +63,7 @@ export const submitAnalysis = async (req, res) => {
 export const getJobStatus = async (req, res) => {
   try {
     const { jobId } = req.params;
-    const job = await Job.findOne({ _id: jobId, userId: req.user.id });
+    const job = await Job.findOne({ _id: jobId, userId: req.user.id }).lean();
 
     if (!job) {
       return res.status(404).json({ success: false, error: 'Job no encontrado' });
@@ -75,13 +78,15 @@ export const getJobStatus = async (req, res) => {
       });
     }
 
-    if (job.status === 'completed') {
+    if (job.status === 'completed' && job.analysisId) {
+      const analysis = await Analysis.findById(job.analysisId).lean();
       return res.status(200).json({
         success: true,
         jobId: job._id,
-        status: job.status,
-        result: job.result,
+        status: 'completed',
+        candidateName: job.candidateName,
         completedAt: job.completedAt,
+        analysis,
       });
     }
 
@@ -89,7 +94,7 @@ export const getJobStatus = async (req, res) => {
       success: false,
       jobId: job._id,
       status: job.status,
-      error: job.error,
+      error: job.error ?? 'El análisis falló sin mensaje de error.',
     });
   } catch (error) {
     logger.error('[analyze.controller] getJobStatus error:', error);
@@ -100,7 +105,7 @@ export const getJobStatus = async (req, res) => {
 export const getMyJobs = async (req, res) => {
   try {
     const jobs = await Job.find({ userId: req.user.id })
-      .select('_id status createdAt completedAt result.candidateData.fullName result.occupation error')
+      .select('_id status candidateName hobby analysisId createdAt completedAt error')
       .sort({ createdAt: -1 })
       .limit(10)
       .lean();
@@ -108,6 +113,51 @@ export const getMyJobs = async (req, res) => {
     return res.status(200).json({ success: true, data: jobs, count: jobs.length });
   } catch (error) {
     logger.error('[analyze.controller] getMyJobs error:', error);
+    return res.status(500).json({ success: false, error: 'Error interno del servidor' });
+  }
+};
+
+export const getAnalysisById = async (req, res) => {
+  try {
+    const { analysisId } = req.params;
+    const analysis = await Analysis.findOne({
+      _id: analysisId,
+      createdBy: req.user.id,
+    }).lean();
+
+    if (!analysis) {
+      return res.status(404).json({ success: false, error: 'Análisis no encontrado' });
+    }
+
+    return res.status(200).json({ success: true, data: analysis });
+  } catch (error) {
+    logger.error('[analyze.controller] getAnalysisById error:', error);
+    return res.status(500).json({ success: false, error: 'Error interno del servidor' });
+  }
+};
+
+export const getMyAnalyses = async (req, res) => {
+  try {
+    const full = req.query.full === 'true';
+
+    const selectFields = full ? null : '_id candidateData functionalArea occupation createdAt';
+
+    const query = Analysis.find({ createdBy: req.user.id }).sort({ createdAt: -1 }).limit(20);
+
+    if (selectFields) {
+      query.select(selectFields);
+    }
+
+    const analyses = await query.lean();
+
+    return res.status(200).json({
+      success: true,
+      data: analyses,
+      count: analyses.length,
+      full,
+    });
+  } catch (error) {
+    logger.error('[analyze.controller] getMyAnalyses error:', error);
     return res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 };

@@ -1,7 +1,9 @@
-import { extractText } from 'unpdf';
+import { extractText, getDocumentProxy } from 'unpdf';
 
 export const processPdfText = async (buffer) => {
-  const { text } = await extractText(buffer);
+  const pdf = await getDocumentProxy(buffer);
+
+  const { text } = await extractText(pdf, { mergePages: true });
 
   if (!text || text.trim().length < 100) {
     return { shouldOCR: true, content: null };

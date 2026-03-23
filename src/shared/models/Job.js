@@ -1,55 +1,25 @@
-import { Schema, model } from 'mongoose';
-
-const CandidateDataSchema = new Schema(
-  {
-    fullName: { type: String, default: 'N/A' },
-    profession: { type: String, default: 'N/A' },
-    age: { type: String, default: 'N/A' },
-    email: { type: String, default: 'N/A' },
-    phone: { type: String, default: 'N/A' },
-    dni: { type: String, default: 'N/A' },
-  },
-  { _id: false },
-);
-
-const FunctionalAreaSchema = new Schema(
-  {
-    area: { type: String, default: 'N/A' },
-    score: { type: Number, min: 0, max: 100, default: 0 },
-  },
-  { _id: false },
-);
+import { model, Schema } from 'mongoose';
 
 const jobSchema = new Schema(
   {
-    userId: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-      index: true,
-    },
-    hobby: { type: String, trim: true },
-    feel: {
-      type: String,
-      enum: ['dramatic', 'poetic', 'sharp', 'visionary', 'technical'],
-      default: 'dramatic',
-    },
+    userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    analysisId: { type: Schema.Types.ObjectId, ref: 'Analysis', default: null },
+    candidateName: { type: String, default: 'N/A' },
+    hobby: { type: String, default: '' },
     status: {
       type: String,
       enum: ['pending', 'processing', 'completed', 'failed'],
       default: 'pending',
     },
-    result: {
-      candidateData: CandidateDataSchema,
-      functionalArea: FunctionalAreaSchema,
-      occupation: String,
-      ai_insight: String,
-      summary: String,
-    },
     error: { type: String },
     attempts: { type: Number, default: 0 },
     startedAt: { type: Date },
     completedAt: { type: Date },
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
   },
   {
     timestamps: true,

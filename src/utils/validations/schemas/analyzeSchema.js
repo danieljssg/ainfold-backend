@@ -8,10 +8,7 @@ const analyzeSchema = z.object({
     .trim()
     .optional()
     .default(''),
-  feel: z
-    .enum(['dramatic', 'poetic', 'sharp', 'visionary', 'technical'])
-    .optional()
-    .default('dramatic'),
+  candidateName: z.string().min(2, 'El nombre debe tener al menos 2 caracteres').max(100).trim(),
 });
 
 export { analyzeSchema };
