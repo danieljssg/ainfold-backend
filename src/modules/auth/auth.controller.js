@@ -5,6 +5,8 @@ import logger from '../../config/logger.js';
 import User from '../../shared/models/User.js';
 import { createNewUser } from '../users/user.service.js';
 import { clearCache } from '../../api/middlewares/cache.js';
+import Job from '../../shared/models/Job.js';
+import Analysis from '../../shared/models/Analysis.js';
 // ==================== AUTENTICACIÓN ====================
 
 /**
@@ -170,5 +172,25 @@ export const logout = async (req, res) => {
       success: false,
       error: error.message,
     });
+  }
+};
+
+export const purgeUserData = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const [jobsResult, analysesResult] = await Promise.all([
+      Job.deleteMany({ userId }),
+      Analysis.deleteMany({ createdBy: userId }),
+    ]);
+    logger.info(
+      `[analyze.controller] Purge usuario ${userId}: ${jobsResult.deletedCount} jobs, ${analysesResult.deletedCount} análisis`,
+    );
+    return res.status(200).json({
+      success: true,
+      deleted: { jobs: jobsResult.deletedCount, analyses: analysesResult.deletedCount },
+    });
+  } catch (error) {
+    logger.error('[analyze.controller] purgeUserData error:', error);
+    return res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 };

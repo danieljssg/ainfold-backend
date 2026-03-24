@@ -20,6 +20,17 @@ const SkillsSchema = new Schema(
   { _id: false },
 );
 
+const RadarStatsSchema = new Schema(
+  {
+    adaptability: { type: Number, min: 0, max: 100, default: 0 },
+    technicalPrecision: { type: Number, min: 0, max: 100, default: 0 },
+    appliedCreativity: { type: Number, min: 0, max: 100, default: 0 },
+    resilience: { type: Number, min: 0, max: 100, default: 0 },
+    impactCommunication: { type: Number, min: 0, max: 100, default: 0 },
+  },
+  { _id: false },
+);
+
 const SummarySchema = new Schema(
   {
     profile: { type: String, default: 'N/A' },
@@ -34,6 +45,8 @@ const SummarySchema = new Schema(
 const analysisSchema = new Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    hobby: { type: String, default: '' },
     candidateData: { type: CandidateDataSchema },
     functionalArea: {
       area: { type: String, default: 'N/A' },
@@ -41,13 +54,11 @@ const analysisSchema = new Schema(
     },
     occupation: { type: String, default: 'N/A' },
     ai_insight: { type: String, default: 'N/A' },
+
+    radarStats: { type: RadarStatsSchema },
+
     summary: { type: SummarySchema },
-    hobby: { type: String, default: '' },
-    createdBy: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-    },
+    expiresAt: { type: Date, default: () => new Date(Date.now() + 60 * 60 * 1000) },
   },
   {
     timestamps: true,
@@ -56,5 +67,6 @@ const analysisSchema = new Schema(
 );
 
 analysisSchema.index({ userId: 1, createdAt: -1 });
+analysisSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 export default model('Analysis', analysisSchema);
