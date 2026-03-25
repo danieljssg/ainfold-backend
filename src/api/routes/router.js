@@ -17,12 +17,8 @@ router.get('/csrf-token', (req, res) => {
 router.use('/auth', authRoutes);
 
 router.use(doubleCsrfProtection);
-router.use('/analyzes', validateSign, analyzesRoutes);
-router.use('/jobs', validateSign, jobsRoutes);
+router.use('/analyzes', [validateSign, cacheMiddleware()], analyzesRoutes);
+router.use('/jobs', [validateSign], jobsRoutes);
 router.use('/users', [validateSign, cacheMiddleware()], userRoutes);
-
-router.get('/', validateSign, (_req, res) => {
-  return res.status(200).json({ message: 'Welcome to the API' });
-});
 
 export default router;

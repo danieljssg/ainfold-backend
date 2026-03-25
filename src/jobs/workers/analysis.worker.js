@@ -5,6 +5,7 @@ import Analysis from '../../shared/models/Analysis.js';
 import Job from '../../shared/models/Job.js';
 import { analyzeResume } from '../../shared/services/ai.service.js';
 import { processPdfText } from '../../shared/services/pdf.service.js';
+import { setJobProgress } from '../../modules/jobs/job.service.js';
 
 export const analysisWorker = new Worker(
   'analysisStream',
@@ -29,7 +30,11 @@ export const analysisWorker = new Worker(
         nodeBuffer.byteLength,
       );
 
+      await setJobProgress(jobId, 10, 'Preparando documento...');
+
       const { shouldOCR, content } = await processPdfText(buffer);
+
+      await setJobProgress(jobId, 60, 'Sintetizando información...');
 
       if (shouldOCR) {
         await Job.findByIdAndUpdate(jobId, {
@@ -51,6 +56,7 @@ export const analysisWorker = new Worker(
           ...result.candidateData,
           fullName: candidateName || result.candidateData?.fullName || 'N/A',
         },
+        radarStats: result.radarStats,
         functionalArea: result.functionalArea,
         occupation: result.occupation,
         ai_insight: result.ai_insight,
@@ -61,6 +67,7 @@ export const analysisWorker = new Worker(
         status: 'completed',
         analysisId: analysis._id,
         completedAt: new Date(),
+        progress: { percentage: 100, step: 'Finalizado' },
       });
 
       logger.info(`[analysisWorker] Job ${jobId} completado — ${analysis.candidateData.fullName}`);

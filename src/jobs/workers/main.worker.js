@@ -34,6 +34,28 @@ const mainWorker = new Worker(
         break;
       }
 
+      case 'USER_PURGE': {
+        try {
+          const { userId } = data;
+          const Job = (await import('../../shared/models/Job.js')).default;
+          const Analysis = (await import('../../shared/models/Analysis.js')).default;
+
+          logger.info(`🧹 Purgando datos para el usuario ID: ${userId}`);
+
+          const [jobsResult, analysesResult] = await Promise.all([
+            Job.deleteMany({ userId }),
+            Analysis.deleteMany({ createdBy: userId }),
+          ]);
+
+          logger.info(
+            `✅ Purge completado para ${userId}: ${jobsResult.deletedCount} jobs, ${analysesResult.deletedCount} análisis`,
+          );
+        } catch (error) {
+          logger.error(`❌ Error en USER_PURGE: ${error.message}`);
+        }
+        break;
+      }
+
       default:
         logger.warn(`⚠️ Tipo de tarea no reconocida: ${name}`);
     }

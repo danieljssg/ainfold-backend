@@ -7,6 +7,7 @@ import { createNewUser } from '../users/user.service.js';
 import { clearCache } from '../../api/middlewares/cache.js';
 import Job from '../../shared/models/Job.js';
 import Analysis from '../../shared/models/Analysis.js';
+import { addJob } from '../../jobs/queues/main.queue.js';
 // ==================== AUTENTICACIÓN ====================
 
 /**
@@ -152,7 +153,6 @@ export const refreshToken = async (req, res) => {
 
 export const logout = async (req, res) => {
   try {
-    // Clear cache for the user and tokens
     const authHeader = req.headers.authorization;
     const bearerToken = authHeader?.split(' ')[1];
     const csrfToken = req.headers['x-csrf-token'];
@@ -178,19 +178,25 @@ export const logout = async (req, res) => {
 export const purgeUserData = async (req, res) => {
   try {
     const userId = req.user.id;
-    const [jobsResult, analysesResult] = await Promise.all([
-      Job.deleteMany({ userId }),
-      Analysis.deleteMany({ createdBy: userId }),
-    ]);
-    logger.info(
-      `[analyze.controller] Purge usuario ${userId}: ${jobsResult.deletedCount} jobs, ${analysesResult.deletedCount} análisis`,
-    );
+    const authHeader = req.headers.authorization;
+    const bearerToken = authHeader?.split(' ')[1];
+    const csrfToken = req.headers['x-csrf-token'];
+
+    if (req.user?.id) await clearCache(req.user.id);
+    if (bearerToken) await clearCache(bearerToken);
+    if (csrfToken) await clearCache(csrfToken);
+
+    await addJob('USER_PURGE', {
+      userId,
+    });
+
+    res.clearCookie('x-csrf-token');
     return res.status(200).json({
       success: true,
-      deleted: { jobs: jobsResult.deletedCount, analyses: analysesResult.deletedCount },
+      message: 'Logout successful',
     });
   } catch (error) {
-    logger.error('[analyze.controller] purgeUserData error:', error);
+    logger.error('[auth.controller] purgeUserData error:', error);
     return res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 };

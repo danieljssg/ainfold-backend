@@ -20,7 +20,7 @@ const jobSchema = new Schema(
     attempts: { type: Number, default: 0 },
     startedAt: { type: Date },
     completedAt: { type: Date },
-    expiresAt: { type: Date, default: () => new Date(Date.now() + 60 * 60 * 1000) },
+    expiresAt: { type: Date, expires: 3600, default: Date.now }, // expira en 1 hora
   },
   {
     timestamps: true,
@@ -29,6 +29,5 @@ const jobSchema = new Schema(
 );
 
 jobSchema.index({ userId: 1, status: 1, createdAt: -1 });
-jobSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 export default model('Job', jobSchema);

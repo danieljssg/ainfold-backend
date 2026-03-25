@@ -58,7 +58,7 @@ const analysisSchema = new Schema(
     radarStats: { type: RadarStatsSchema },
 
     summary: { type: SummarySchema },
-    expiresAt: { type: Date, default: () => new Date(Date.now() + 60 * 60 * 1000) },
+    expiresAt: { type: Date, expires: 3600, default: Date.now }, // expira en 1 hora
   },
   {
     timestamps: true,
@@ -67,6 +67,5 @@ const analysisSchema = new Schema(
 );
 
 analysisSchema.index({ userId: 1, createdAt: -1 });
-analysisSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 export default model('Analysis', analysisSchema);
