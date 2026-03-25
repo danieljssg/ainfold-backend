@@ -75,7 +75,9 @@ export const analyzeResume = async (cvText, hobby = '', candidateName = '') => {
   const data = await response.json();
   const raw = data.choices?.[0]?.message?.content;
 
-  if (!raw) throw new Error('OpenRouter devolvió respuesta vacía');
+  if (!raw) {
+    throw new Error('OpenRouter devolvió respuesta vacía');
+  }
 
   try {
     return JSON.parse(raw.replace(/```json|```/g, '').trim());

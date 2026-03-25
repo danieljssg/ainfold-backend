@@ -1,13 +1,11 @@
 export * from './oauth.controller.js';
 
+import { clearCache } from '../../api/middlewares/cache.js';
 import { generateToken } from '../../config/jwt.js';
 import logger from '../../config/logger.js';
+import { addJob } from '../../jobs/queues/main.queue.js';
 import User from '../../shared/models/User.js';
 import { createNewUser } from '../users/user.service.js';
-import { clearCache } from '../../api/middlewares/cache.js';
-import Job from '../../shared/models/Job.js';
-import Analysis from '../../shared/models/Analysis.js';
-import { addJob } from '../../jobs/queues/main.queue.js';
 // ==================== AUTENTICACIÓN ====================
 
 /**
@@ -157,9 +155,15 @@ export const logout = async (req, res) => {
     const bearerToken = authHeader?.split(' ')[1];
     const csrfToken = req.headers['x-csrf-token'];
 
-    if (req.user?.id) await clearCache(req.user.id);
-    if (bearerToken) await clearCache(bearerToken);
-    if (csrfToken) await clearCache(csrfToken);
+    if (req.user?.id) {
+      await clearCache(req.user.id);
+    }
+    if (bearerToken) {
+      await clearCache(bearerToken);
+    }
+    if (csrfToken) {
+      await clearCache(csrfToken);
+    }
 
     res.clearCookie('x-csrf-token');
     res.json({
@@ -182,9 +186,15 @@ export const purgeUserData = async (req, res) => {
     const bearerToken = authHeader?.split(' ')[1];
     const csrfToken = req.headers['x-csrf-token'];
 
-    if (req.user?.id) await clearCache(req.user.id);
-    if (bearerToken) await clearCache(bearerToken);
-    if (csrfToken) await clearCache(csrfToken);
+    if (req.user?.id) {
+      await clearCache(req.user.id);
+    }
+    if (bearerToken) {
+      await clearCache(bearerToken);
+    }
+    if (csrfToken) {
+      await clearCache(csrfToken);
+    }
 
     await addJob('USER_PURGE', {
       userId,

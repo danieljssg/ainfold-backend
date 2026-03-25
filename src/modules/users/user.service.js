@@ -7,7 +7,6 @@ export const createNewUser = async (userData, modifierId = null) => {
     name,
     lastName,
     email,
-    password,
     role = 'USER',
     zone = 'n/a',
     parentTagId,
@@ -187,7 +186,11 @@ export const deleteUser = async (tagId, modifierId = null) => {
 
   const originalUser = user.toObject();
 
-  const deletedUser = await User.findOneAndUpdate({ tagId }, { isActive: false }, { returnDocument: 'after' });
+  const deletedUser = await User.findOneAndUpdate(
+    { tagId },
+    { isActive: false },
+    { returnDocument: 'after' },
+  );
 
   await User.updateMany({ parentTagId: tagId }, { parentTagId: user.parentTagId });
 

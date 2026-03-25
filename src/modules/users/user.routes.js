@@ -3,7 +3,6 @@ import {
   validateRegister,
   validateUpdateUser,
 } from '../../api/middlewares/validationMiddleware.js';
-import { validateSign } from '../auth/auth.middleware.js';
 import {
   create,
   createBatch,

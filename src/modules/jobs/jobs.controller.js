@@ -8,7 +8,9 @@ export const getJobStatus = async (req, res) => {
       { _id: jobId, userId: req.user.id },
       '_id status progress attempts analysisId completedAt error',
     ).lean();
-    if (!job) return res.status(404).json({ success: false, error: 'Job no encontrado' });
+    if (!job) {
+      return res.status(404).json({ success: false, error: 'Job no encontrado' });
+    }
     const base = {
       success: true,
       jobId: job._id,
@@ -16,14 +18,16 @@ export const getJobStatus = async (req, res) => {
       progress: job.progress,
       attempts: job.attempts,
     };
-    if (job.status === 'completed')
+    if (job.status === 'completed') {
       return res
         .status(200)
         .json({ ...base, analysisId: job.analysisId, completedAt: job.completedAt });
-    if (job.status === 'failed')
+    }
+    if (job.status === 'failed') {
       return res
         .status(200)
         .json({ ...base, success: false, error: job.error ?? 'El análisis falló.' });
+    }
     return res.status(200).json(base);
   } catch (error) {
     logger.error('[analyze.controller] getJobStatus error:', error);

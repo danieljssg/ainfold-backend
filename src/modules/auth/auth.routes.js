@@ -4,11 +4,11 @@ import {
   googleAuth,
   googleCallback,
   googleLogin,
+  purgeUserData,
   refreshToken,
   signIn,
   signUp,
   validateUser,
-  purgeUserData,
 } from './auth.controller.js';
 import { validateSign } from './auth.middleware.js';
 

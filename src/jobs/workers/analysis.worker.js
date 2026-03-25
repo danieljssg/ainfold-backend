@@ -1,11 +1,11 @@
 import { Worker } from 'bullmq';
 import logger from '../../config/logger.js';
 import { WorkerConnection } from '../../config/redis.js';
+import { setJobProgress } from '../../modules/jobs/job.service.js';
 import Analysis from '../../shared/models/Analysis.js';
 import Job from '../../shared/models/Job.js';
 import { analyzeResume } from '../../shared/services/ai.service.js';
 import { processPdfText } from '../../shared/services/pdf.service.js';
-import { setJobProgress } from '../../modules/jobs/job.service.js';
 
 export const analysisWorker = new Worker(
   'analysisStream',

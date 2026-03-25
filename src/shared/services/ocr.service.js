@@ -1,3 +1,4 @@
+import logger from '../../config/logger.js';
 // import Tesseract from 'tesseract.js';
 
 export const performOCR = async (pdfBuffer) => {
@@ -13,14 +14,16 @@ export const performOCR = async (pdfBuffer) => {
     } = await Tesseract.recognize(
       pdfBuffer,
       'spa', // Idioma español
-      { logger: (m) => console.log(m) }, // Opcional: ver progreso en consola
+      { logger: (m) => logger.debug(m) }, // Opcional: ver progreso en consola
     );
 
-    if (!text || text.length < 10) throw new Error('OCR fallido o texto insuficiente.');
+    if (!text || text.length < 10) {
+      throw new Error('OCR fallido o texto insuficiente.');
+    }
 
     return text;
   } catch (err) {
-    console.error('Error en Tesseract:', err);
+    logger.error('Error en Tesseract:', err);
     throw new Error('Error procesando el OCR.');
   }
 };

@@ -21,4 +21,4 @@ const doubleCsrfOptions = {
 
 const { generateCsrfToken, doubleCsrfProtection } = doubleCsrf(doubleCsrfOptions);
 
-export { generateCsrfToken, doubleCsrfProtection };
+export { doubleCsrfProtection, generateCsrfToken };

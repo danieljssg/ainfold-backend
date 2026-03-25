@@ -1,3 +1,4 @@
+import logger from '../../config/logger.js';
 import Job from '../../shared/models/Job.js';
 
 export const setJobProgress = async (jobId, percentage, step) => {
@@ -13,7 +14,7 @@ export const setJobProgress = async (jobId, percentage, step) => {
       { returnDocument: 'after' },
     );
   } catch (error) {
-    console.error(`Error updating job progress: ${error.message}`);
+    logger.error(`Error updating job progress: ${error.message}`);
     return null;
   }
 };

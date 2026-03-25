@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { doubleCsrfProtection, generateCsrfToken } from '../../config/csrfConfig.js';
-import { validateSign } from '../../modules/auth/auth.middleware.js';
 import analyzesRoutes from '../../modules/analyzes/analyzes.routes.js';
+import { validateSign } from '../../modules/auth/auth.middleware.js';
 import authRoutes from '../../modules/auth/auth.routes.js';
 import jobsRoutes from '../../modules/jobs/jobs.routes.js';
 import userRoutes from '../../modules/users/user.routes.js';

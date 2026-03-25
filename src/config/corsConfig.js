@@ -14,7 +14,9 @@ if (process.env.NODE_ENV === 'production') {
 
 const corsConfig = {
   origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
+    if (!origin) {
+      return callback(null, true);
+    }
 
     if (allowedOrigins.includes(origin)) {
       callback(null, true);

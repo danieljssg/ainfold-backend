@@ -19,13 +19,15 @@ export const cacheMiddleware = (duration = 3600) => {
       if (!refresh) {
         const cachedResponse = await CacheConnection.get(key);
         if (cachedResponse) {
-          logger.info(`Response from cache for [${identifier}]: ${req.originalUrl} for ${duration} seconds`);
+          logger.info(
+            `Response from cache for [${identifier}]: ${req.originalUrl} for ${duration} seconds`,
+          );
           return res.json(JSON.parse(cachedResponse));
         }
       }
 
       const originalJson = res.json;
-      res.json = function (body) {
+      res.json = (body) => {
         res.json = originalJson;
         if (res.statusCode === 200) {
           CacheConnection.setex(key, duration, JSON.stringify(body));
@@ -46,7 +48,9 @@ export const cacheMiddleware = (duration = 3600) => {
  * @param {string} identifier
  */
 export const clearCache = async (identifier) => {
-  if (!identifier) return;
+  if (!identifier) {
+    return;
+  }
   try {
     let cursor = '0';
     let clearedCount = 0;

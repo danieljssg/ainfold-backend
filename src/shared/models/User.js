@@ -56,13 +56,10 @@ const userSchema = new Schema(
       index: true,
     },
 
-
     isActive: {
       type: Boolean,
       default: true,
     },
-
-
 
     lastLogin: {
       type: Date,
@@ -82,8 +79,6 @@ const userSchema = new Schema(
     versionKey: false,
   },
 );
-
-
 
 userSchema.index({ email: 1, isActive: 1, role: 1, zone: 1, parentTagId: 1, tagId: 1, path: 1 });
 

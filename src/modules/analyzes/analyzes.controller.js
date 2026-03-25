@@ -28,15 +28,13 @@ export const submitAnalysis = async (req, res) => {
       candidateName,
       hobby,
     });
-    return res
-      .status(201)
-      .json({
-        success: true,
-        jobId: job._id,
-        status: 'pending',
-        progress: job.progress,
-        message: 'Tu CV está siendo analizado',
-      });
+    return res.status(201).json({
+      success: true,
+      jobId: job._id,
+      status: 'pending',
+      progress: job.progress,
+      message: 'Tu CV está siendo analizado',
+    });
   } catch (error) {
     logger.error('[analyze.controller] submitAnalysis error:', error);
     return res.status(500).json({ success: false, error: 'Error interno del servidor' });
@@ -50,7 +48,9 @@ export const getJobStatus = async (req, res) => {
       { _id: jobId, userId: req.user.id },
       '_id status progress attempts analysisId completedAt error',
     ).lean();
-    if (!job) return res.status(404).json({ success: false, error: 'Job no encontrado' });
+    if (!job) {
+      return res.status(404).json({ success: false, error: 'Job no encontrado' });
+    }
     const base = {
       success: true,
       jobId: job._id,
@@ -58,14 +58,16 @@ export const getJobStatus = async (req, res) => {
       progress: job.progress,
       attempts: job.attempts,
     };
-    if (job.status === 'completed')
+    if (job.status === 'completed') {
       return res
         .status(200)
         .json({ ...base, analysisId: job.analysisId, completedAt: job.completedAt });
-    if (job.status === 'failed')
+    }
+    if (job.status === 'failed') {
       return res
         .status(200)
         .json({ ...base, success: false, error: job.error ?? 'El análisis falló.' });
+    }
     return res.status(200).json(base);
   } catch (error) {
     logger.error('[analyze.controller] getJobStatus error:', error);
@@ -93,7 +95,9 @@ export const getAnalysisById = async (req, res) => {
       _id: req.params.analysisId,
       createdBy: req.user.id,
     }).lean();
-    if (!analysis) return res.status(404).json({ success: false, error: 'Análisis no encontrado' });
+    if (!analysis) {
+      return res.status(404).json({ success: false, error: 'Análisis no encontrado' });
+    }
     return res.status(200).json({ success: true, data: analysis });
   } catch (error) {
     logger.error('[analyze.controller] getAnalysisById error:', error);
@@ -105,7 +109,9 @@ export const getMyAnalyses = async (req, res) => {
   try {
     const full = req.query.full === 'true';
     const query = Analysis.find({ createdBy: req.user.id }).sort({ createdAt: -1 }).limit(20);
-    if (!full) query.select('_id candidateData functionalArea occupation createdAt');
+    if (!full) {
+      query.select('_id candidateData functionalArea occupation createdAt');
+    }
     const analyses = await query.lean();
     return res.status(200).json({ success: true, data: analyses, count: analyses.length, full });
   } catch (error) {
@@ -124,12 +130,10 @@ export const purgeUserData = async (req, res) => {
     logger.info(
       `[analyze.controller] Purge usuario ${userId}: ${jobsResult.deletedCount} jobs, ${analysesResult.deletedCount} análisis`,
     );
-    return res
-      .status(200)
-      .json({
-        success: true,
-        deleted: { jobs: jobsResult.deletedCount, analyses: analysesResult.deletedCount },
-      });
+    return res.status(200).json({
+      success: true,
+      deleted: { jobs: jobsResult.deletedCount, analyses: analysesResult.deletedCount },
+    });
   } catch (error) {
     logger.error('[analyze.controller] purgeUserData error:', error);
     return res.status(500).json({ success: false, error: 'Error interno del servidor' });
