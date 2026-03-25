@@ -145,7 +145,7 @@ export const updateUser = async (tagId, updateData, modifierId = null) => {
   }
 
   const updatedUser = await User.findOneAndUpdate({ tagId }, updateData, {
-    new: true,
+    returnDocument: 'after',
     runValidators: true,
   });
 
@@ -187,7 +187,7 @@ export const deleteUser = async (tagId, modifierId = null) => {
 
   const originalUser = user.toObject();
 
-  const deletedUser = await User.findOneAndUpdate({ tagId }, { isActive: false }, { new: true });
+  const deletedUser = await User.findOneAndUpdate({ tagId }, { isActive: false }, { returnDocument: 'after' });
 
   await User.updateMany({ parentTagId: tagId }, { parentTagId: user.parentTagId });
 
@@ -254,7 +254,7 @@ export const moveUserToNewHierarchy = async (tagId, newParentTagId, modifierId =
   const updatedUser = await User.findOneAndUpdate(
     { tagId },
     { parentTagId: newParentTagId || null, path: newPath },
-    { new: true },
+    { returnDocument: 'after' },
   );
 
   if (modifierId) {

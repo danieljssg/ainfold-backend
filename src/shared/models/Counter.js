@@ -36,7 +36,7 @@ counterSchema.statics.getNextSequence = async function (name, prefix, padding = 
       $set: { prefix, padding },
     },
     {
-      new: true,
+      returnDocument: 'after',
       upsert: true,
       setDefaultsOnInsert: true,
     },

@@ -10,7 +10,7 @@ export const setJobProgress = async (jobId, percentage, step) => {
           step,
         },
       },
-      { new: true },
+      { returnDocument: 'after' },
     );
   } catch (error) {
     console.error(`Error updating job progress: ${error.message}`);

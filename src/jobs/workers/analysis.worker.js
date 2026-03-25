@@ -16,7 +16,7 @@ export const analysisWorker = new Worker(
       const jobDoc = await Job.findByIdAndUpdate(
         jobId,
         { status: 'processing', startedAt: new Date(), $inc: { attempts: 1 } },
-        { new: true },
+        { returnDocument: 'after' },
       );
 
       if (!jobDoc) {
