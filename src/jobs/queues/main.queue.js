@@ -32,3 +32,14 @@ export const addAnyQueueJob = (queueName, name, data) => {
     backoff: { type: 'exponential', delay: 1000 },
   });
 };
+
+export const addAudioQueue = new Queue('audioStream', {
+  connection: WorkerConnection,
+});
+
+export const addJobAudio = (name, data) => {
+  return addAudioQueue.add(name, data, {
+    attempts: 1,
+    backoff: { type: 'exponential', delay: 1000 },
+  });
+};

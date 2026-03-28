@@ -3,13 +3,7 @@ let allowedOrigins = [];
 if (process.env.NODE_ENV === 'production') {
   allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map((origin) => origin.trim()) || [];
 } else {
-  allowedOrigins = [
-    'http://localhost:3100',
-    'http://localhost:3101',
-    'http://localhost:3102',
-    'http://localhost:3103',
-    'http://localhost:5500',
-  ];
+  allowedOrigins = ['http://localhost:3000', 'http://localhost:3001'];
 }
 
 const corsConfig = {
