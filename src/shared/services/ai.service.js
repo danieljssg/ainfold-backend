@@ -10,7 +10,7 @@ const RAW_PROMPT = readFileSync(join(__dirname, '../prompts/analysisPrompt.txt')
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 const INSIGHT_TONE =
-  'Habla del potencial futuro del candidato, no solo del presente. El hobby revela capacidades latentes. Inspira y proyecta con visión de largo plazo.';
+  'Habla con energía y visión de futuro. Proyecta al candidato como un talento en ascenso donde su hobby es el <power-up> que lo hace  imparabley diferente. Sé ingenioso: explica cómo su pasión personal le da una ventaja única y divertida que otros no tienen. No analices solo el hoy, inspira sobre el impacto que tendrá mañana su perfil híbrido en la industria.';
 
 const FALLBACK_RESULT = {
   candidateData: {
