@@ -10,6 +10,10 @@ const baseConfig = {
 export const WorkerConnection = new IoRedis({
   ...baseConfig,
   maxRetriesPerRequest: null,
+  enableReadyCheck: false,
+  retryStrategy: (times) => {
+    return Math.min(times * 500, 5000);
+  },
 });
 
 // 2. Conexión para Caché de Requests
