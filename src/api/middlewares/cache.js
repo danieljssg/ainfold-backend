@@ -19,9 +19,7 @@ export const cacheMiddleware = (duration = 3600) => {
       if (!refresh) {
         const cachedResponse = await CacheConnection.get(key);
         if (cachedResponse) {
-          logger.info(
-            `Response from cache for [${identifier}]: ${req.originalUrl} for ${duration} seconds`,
-          );
+          logger.info(`Response from cache for [${identifier}] for ${duration} seconds`);
           return res.json(JSON.parse(cachedResponse));
         }
       }
@@ -43,14 +41,8 @@ export const cacheMiddleware = (duration = 3600) => {
   };
 };
 
-/**
- * Elimina el caché asociado a un identificador (userId, token, etc.)
- * @param {string} identifier
- */
 export const clearCache = async (identifier) => {
-  if (!identifier) {
-    return;
-  }
+  if (!identifier) return;
   try {
     let cursor = '0';
     let clearedCount = 0;

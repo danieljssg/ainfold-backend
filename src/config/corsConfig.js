@@ -1,18 +1,12 @@
-let allowedOrigins = [];
-
-if (process.env.NODE_ENV === 'production') {
-  allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map((origin) => origin.trim()) || [];
-} else {
-  allowedOrigins = ['http://localhost:3000', 'http://localhost:3001'];
-}
-
 const corsConfig = {
   origin: (origin, callback) => {
-    if (!origin) {
+    if (process.env.NODE_ENV === 'development') {
       return callback(null, true);
     }
 
-    if (allowedOrigins.includes(origin)) {
+    const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map((o) => o.trim()) || [];
+
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));

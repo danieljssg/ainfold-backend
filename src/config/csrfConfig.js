@@ -1,24 +1,20 @@
 import { doubleCsrf } from 'csrf-csrf';
 
 const doubleCsrfOptions = {
-  getSecret: () => process.env.SECRET || 'csrf-secret',
-  getSessionIdentifier: (req) => req.ip ?? '',
+  getSecret: () => process.env.CSRF_SECRET || 'csrf-super-secret-token-its-secret-for-csrf',
+  getSessionIdentifier: () => 'stateless-id',
   cookieName: 'x-csrf-token',
   cookieOptions: {
     httpOnly: false,
     sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
     secure: process.env.NODE_ENV === 'production',
     path: '/',
+    maxAge: 24 * 60 * 60 * 1000,
   },
-  getCsrfTokenFromRequest: (req) => {
-    if (process.env.NODE_ENV !== 'production') {
-      return req.headers['x-csrf-token'] || req.cookies['x-csrf-token'];
-    }
-    return req.headers['x-csrf-token'];
-  },
-  ignoredMethods: [],
+  getCsrfTokenFromRequest: (req) => req.headers['x-csrf-token'],
+  ignoredMethods: ['GET', 'HEAD', 'OPTIONS'],
 };
 
 const { generateCsrfToken, doubleCsrfProtection } = doubleCsrf(doubleCsrfOptions);
 
-export { doubleCsrfProtection, generateCsrfToken };
+export { generateCsrfToken, doubleCsrfProtection };
