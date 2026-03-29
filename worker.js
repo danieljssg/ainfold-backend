@@ -3,6 +3,7 @@ import connectDb from './src/config/db.js';
 import logger from './src/config/logger.js';
 import './src/jobs/workers/main.worker.js';
 import './src/jobs/workers/analysis.worker.js';
+import './src/jobs/workers/tts.worker.js';
 
 async function startWorker() {
   try {

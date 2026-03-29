@@ -1,85 +1,61 @@
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { Worker } from 'bullmq';
+import { randomUUID } from 'node:crypto';
 import logger from '../../config/logger.js';
 import { WorkerConnection } from '../../config/redis.js';
-import { setJobProgress } from '../../modules/jobs/job.service.js';
 import Analysis from '../../shared/models/Analysis.js';
-import Job from '../../shared/models/Job.js';
-import { analyzeResume } from '../../shared/services/ai.service.js';
-import { processPdfText } from '../../shared/services/pdf.service.js';
+import AnalysisAudio from '../../shared/models/AnalysisAudio.js';
+import { generateSpeech } from '../../shared/services/tts.service.js';
+
+const UPLOAD_DIR = '/app/uploads/audio';
+
+// Asegurar que el directorio de uploads exista
+if (!existsSync(UPLOAD_DIR)) {
+  mkdirSync(UPLOAD_DIR, { recursive: true });
+}
 
 export const ttsWorker = new Worker(
   'audioStream',
   async (job) => {
-    const { jobId, ai_insight } = job.data;
+    const { analysisId } = job.data;
 
     try {
-      const jobDoc = await Job.findByIdAndUpdate(
-        jobId,
-        { status: 'processing', startedAt: new Date(), $inc: { attempts: 1 } },
-        { returnDocument: 'after' },
-      );
+      logger.info(`[ttsWorker] Iniciando TTS para análisis ${analysisId}`);
 
-      if (!jobDoc) {
-        throw new Error(`Job ${jobId} no encontrado en MongoDB`);
+      const analysis = await Analysis.findById(analysisId).lean();
+
+      if (!analysis) {
+        throw new Error(`Analysis ${analysisId} no encontrado en MongoDB`);
       }
 
-      const nodeBuffer = Buffer.from(pdfBuffer, 'base64');
-      const buffer = new Uint8Array(
-        nodeBuffer.buffer,
-        nodeBuffer.byteOffset,
-        nodeBuffer.byteLength,
-      );
-
-      await setJobProgress(jobId, 10, 'Preparando documento...');
-
-      const { shouldOCR, content } = await processPdfText(buffer);
-
-      await setJobProgress(jobId, 60, 'Sintetizando información...');
-
-      if (shouldOCR) {
-        await Job.findByIdAndUpdate(jobId, {
-          status: 'failed',
-          error:
-            'El PDF es un documento escaneado y no contiene texto extraíble. Por favor sube un CV en formato digital.',
-          completedAt: new Date(),
-        });
-        return { success: false, reason: 'ocr_required' };
+      if (!analysis.ai_insight || analysis.ai_insight === 'N/A') {
+        throw new Error(`Analysis ${analysisId} no tiene ai_insight generado`);
       }
 
-      const result = await analyzeResume(content, hobby, candidateName);
+      // Generar audio desde el ai_insight
+      const audioBuffer = await generateSpeech(analysis.ai_insight);
 
-      const analysis = await Analysis.create({
-        userId: jobDoc.userId,
-        createdBy: jobDoc.userId,
-        hobby,
-        candidateData: {
-          ...result.candidateData,
-          fullName: candidateName || result.candidateData?.fullName || 'N/A',
-        },
-        radarStats: result.radarStats,
-        functionalArea: result.functionalArea,
-        occupation: result.occupation,
-        ai_insight: result.ai_insight,
-        summary: result.summary,
-      });
+      // Guardar archivo con nombre único
+      const fileName = `${randomUUID()}.mp3`;
+      const filePath = join(UPLOAD_DIR, fileName);
 
-      await Job.findByIdAndUpdate(jobId, {
-        status: 'completed',
+      writeFileSync(filePath, audioBuffer);
+
+      // Crear registro en base de datos
+      const audioRecord = await AnalysisAudio.create({
         analysisId: analysis._id,
-        completedAt: new Date(),
-        progress: { percentage: 100, step: 'Finalizado' },
+        fileName,
+        filePath,
       });
 
-      logger.info(`[analysisWorker] Job ${jobId} completado — ${analysis.candidateData.fullName}`);
+      logger.info(
+        `[ttsWorker] Audio generado: ${fileName} (${audioBuffer.length} bytes) — record ${audioRecord._id}`,
+      );
 
-      return { success: true, jobId, analysisId: analysis._id };
+      return { success: true, analysisId, audioId: audioRecord._id, fileName };
     } catch (err) {
-      logger.error(`[analysisWorker] Error inesperado en job ${jobId}: ${err.message}`);
-      await Job.findByIdAndUpdate(jobId, {
-        status: 'failed',
-        error: err.message,
-        completedAt: new Date(),
-      }).catch(() => {});
+      logger.error(`[ttsWorker] Error en TTS para análisis ${analysisId}: ${err.message}`);
       throw err;
     }
   },

@@ -1,6 +1,7 @@
 import logger from '../../config/logger.js';
-import { addJobAnalysis } from '../../jobs/queues/main.queue.js';
+import { addJobAnalysis, addJobAudio } from '../../jobs/queues/main.queue.js';
 import Analysis from '../../shared/models/Analysis.js';
+import AnalysisAudio from '../../shared/models/AnalysisAudio.js';
 import Job from '../../shared/models/Job.js';
 import { analyzeSchema } from '../../utils/validations/schemas/analyzeSchema.js';
 
@@ -72,22 +73,40 @@ export const getMyAnalyses = async (req, res) => {
   }
 };
 
-export const purgeUserData = async (req, res) => {
+export const generateTTS = async (req, res) => {
   try {
-    const userId = req.user.id;
-    const [jobsResult, analysesResult] = await Promise.all([
-      Job.deleteMany({ userId }),
-      Analysis.deleteMany({ createdBy: userId }),
-    ]);
-    logger.info(
-      `[analyze.controller] Purge usuario ${userId}: ${jobsResult.deletedCount} jobs, ${analysesResult.deletedCount} análisis`,
-    );
-    return res.status(200).json({
+    const { analysisId } = req.params;
+    const analysis = await Analysis.findOne({
+      _id: analysisId,
+      createdBy: req.user.id,
+    }).lean();
+
+    if (!analysis) {
+      return res.status(404).json({ success: false, error: 'Análisis no encontrado' });
+    }
+
+    if (!analysis.ai_insight || analysis.ai_insight === 'N/A') {
+      return res.status(400).json({ success: false, error: 'El análisis no tiene contenido de IA generado' });
+    }
+
+    // Opcional: Verificar si ya existe el audio
+    const existingAudio = await AnalysisAudio.findOne({ analysisId }).lean();
+    if (existingAudio) {
+      return res.status(200).json({
+        success: true,
+        message: 'El audio ya existe o está en proceso',
+        data: existingAudio,
+      });
+    }
+
+    await addJobAudio('GENERATE_TTS', { analysisId });
+
+    return res.status(202).json({
       success: true,
-      deleted: { jobs: jobsResult.deletedCount, analyses: analysesResult.deletedCount },
+      message: 'La generación de audio ha comenzado',
     });
   } catch (error) {
-    logger.error('[analyze.controller] purgeUserData error:', error);
+    logger.error('[analyze.controller] generateTTS error:', error);
     return res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 };
