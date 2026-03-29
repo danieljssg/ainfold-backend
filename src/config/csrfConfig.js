@@ -1,7 +1,7 @@
 import { doubleCsrf } from 'csrf-csrf';
 
 const doubleCsrfOptions = {
-  getSecret: () => process.env.CSRF_SECRET || 'csrf-secret',
+  getSecret: () => process.env.SECRET || 'csrf-secret',
   getSessionIdentifier: (req) => req.ip ?? '',
   cookieName: 'x-csrf-token',
   cookieOptions: {
