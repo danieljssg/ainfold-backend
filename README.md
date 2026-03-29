@@ -1,8 +1,20 @@
-# ⚙️ Spotz Analysis: Backend Orchestration
+# 🎙️ Spotz Analysis: AI'nFold
 
-## _Motor de Análisis IA y Síntesis de Voz_
+## _Arte, Código y Latencia — Transformando datos en narrativa sonora_
 
-AI'nFold Backend es el núcleo de procesamiento y la extracción de datos, el análisis de LLMs y la generación de audio mediante modelos de síntesis de voz (TTS) autohospedados.
+AI'nFold es una plataforma que recibe datos de candidatos, los procesa mediante IA y genera un análisis completo, y mediante generación de audio, narra la relación entre sus hobbies y su perfil profesional: **Habilidades Transferibles**.
+
+<!-- ---
+
+## 📺 Demo en Video
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/TU_VIDEO_ID" title="Spotz Analysis - Demo completa" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+
+--- -->
+
+## 💬 El Hook
+
+> _"Uno de los retos en RRHH, sobre todo en Venezuela, es que bajo diversas circunstancias… El ingeniero aprendió repostería, la contadora es manicurista, el Dev aprendió a ser barista y el médico es locutor. No basta con la experiencia técnica; son esos detalles que pasan desapercibidos los que marcan la diferencia. AI'nFold busca ir más allá, explorando cómo lo que te apasiona se transfiere a tu trabajo diario."_
 
 ---
 
