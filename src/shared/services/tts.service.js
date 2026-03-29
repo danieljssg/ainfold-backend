@@ -1,9 +1,11 @@
 import logger from '../../config/logger.js';
+import { normalizeTTS } from '../../utils/ttsDictionary.js';
 
 const TTS_URL = `${process.env.TTS_PROVIDER}/v1/audio/speech`;
 
 export const generateSpeech = async (text) => {
-  logger.info(`[tts.service] Generando audio (${text.length} caracteres)`);
+  const normalizedText = await normalizeTTS(text);
+  logger.info(`[tts.service] Generando audio (${normalizedText.length} caracteres)`);
 
   const response = await fetch(TTS_URL, {
     method: 'POST',
@@ -12,7 +14,7 @@ export const generateSpeech = async (text) => {
     },
     body: JSON.stringify({
       model: 'kokoro',
-      input: text,
+      input: normalizedText,
       voice: 'ef_dora',
       speed: 1.15,
     }),

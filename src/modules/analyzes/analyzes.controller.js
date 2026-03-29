@@ -91,7 +91,6 @@ export const generateTTS = async (req, res) => {
         .json({ success: false, error: 'El análisis no tiene contenido de IA generado' });
     }
 
-    // Opcional: Verificar si ya existe el audio
     const existingAudio = await AnalysisAudio.findOne({ analysisId }).lean();
     if (existingAudio) {
       return res.status(200).json({
@@ -103,7 +102,7 @@ export const generateTTS = async (req, res) => {
 
     await addJobAudio('GENERATE_TTS', { analysisId });
 
-    return res.status(202).json({
+    return res.status(200).json({
       success: true,
       message: 'La generación de audio ha comenzado',
     });
