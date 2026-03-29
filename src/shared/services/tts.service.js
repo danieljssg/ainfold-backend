@@ -2,11 +2,6 @@ import logger from '../../config/logger.js';
 
 const TTS_URL = `${process.env.TTS_PROVIDER}/v1/audio/speech`;
 
-/**
- * Genera audio a partir de texto usando Kokoro-TTS.
- * @param {string} text - El texto a convertir en audio (ai_insight).
- * @returns {Promise<Buffer>} - El audio generado como Buffer.
- */
 export const generateSpeech = async (text) => {
   logger.info(`[tts.service] Generando audio (${text.length} caracteres)`);
 

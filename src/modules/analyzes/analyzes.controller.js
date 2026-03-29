@@ -86,7 +86,9 @@ export const generateTTS = async (req, res) => {
     }
 
     if (!analysis.ai_insight || analysis.ai_insight === 'N/A') {
-      return res.status(400).json({ success: false, error: 'El análisis no tiene contenido de IA generado' });
+      return res
+        .status(400)
+        .json({ success: false, error: 'El análisis no tiene contenido de IA generado' });
     }
 
     // Opcional: Verificar si ya existe el audio
@@ -107,6 +109,20 @@ export const generateTTS = async (req, res) => {
     });
   } catch (error) {
     logger.error('[analyze.controller] generateTTS error:', error);
+    return res.status(500).json({ success: false, error: 'Error interno del servidor' });
+  }
+};
+
+export const getAudioTTS = async (req, res) => {
+  try {
+    const { analysisId } = req.params;
+    const audio = await AnalysisAudio.findOne({ analysisId }).lean();
+    if (!audio) {
+      return res.status(404).json({ success: false, error: 'Audio no encontrado' });
+    }
+    return res.status(200).json({ success: true, data: audio });
+  } catch (error) {
+    logger.error('[analyze.controller] getAudio error:', error);
     return res.status(500).json({ success: false, error: 'Error interno del servidor' });
   }
 };

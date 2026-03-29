@@ -8,9 +8,8 @@ import Analysis from '../../shared/models/Analysis.js';
 import AnalysisAudio from '../../shared/models/AnalysisAudio.js';
 import { generateSpeech } from '../../shared/services/tts.service.js';
 
-const UPLOAD_DIR = '/app/uploads/audio';
+const UPLOAD_DIR = '/app/public/uploads';
 
-// Asegurar que el directorio de uploads exista
 if (!existsSync(UPLOAD_DIR)) {
   mkdirSync(UPLOAD_DIR, { recursive: true });
 }
@@ -33,16 +32,13 @@ export const ttsWorker = new Worker(
         throw new Error(`Analysis ${analysisId} no tiene ai_insight generado`);
       }
 
-      // Generar audio desde el ai_insight
       const audioBuffer = await generateSpeech(analysis.ai_insight);
 
-      // Guardar archivo con nombre único
       const fileName = `${randomUUID()}.mp3`;
       const filePath = join(UPLOAD_DIR, fileName);
 
       writeFileSync(filePath, audioBuffer);
 
-      // Crear registro en base de datos
       const audioRecord = await AnalysisAudio.create({
         analysisId: analysis._id,
         fileName,

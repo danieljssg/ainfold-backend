@@ -5,11 +5,13 @@ import {
   getAnalysisById,
   getMyAnalyses,
   submitAnalysis,
+  getAudioTTS,
 } from './analyzes.controller.js';
 
 const router = Router();
 
 router.post('/', uploadPdf.single('cv'), submitAnalysis);
+router.get('/:analysisId/tts', getAudioTTS);
 router.post('/:analysisId/tts', generateTTS);
 
 router.get('/', getMyAnalyses);
