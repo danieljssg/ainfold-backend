@@ -18,6 +18,7 @@ const analysisAudioSchema = new Schema(
       required: true,
       trim: true,
     },
+    expiresAt: { type: Date, expires: 3600, default: Date.now }, // expira en 1 hora
   },
   {
     timestamps: true,

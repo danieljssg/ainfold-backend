@@ -47,13 +47,12 @@ export const analysisWorker = new Worker(
         return { success: false, reason: 'ocr_required' };
       }
 
-
-
       const isValidName = fuzzyMatchName(candidateName, content);
       if (!isValidName) {
         await Job.findByIdAndUpdate(jobId, {
           status: 'failed',
-          error: 'El currículum subido no parece pertenecer al nombre ingresado. Por favor verifica que hayas subido el PDF correcto.',
+          error:
+            'El currículum subido no parece pertenecer al nombre ingresado. Por favor verifica que hayas subido el PDF correcto.',
           completedAt: new Date(),
         });
         return { success: false, reason: 'name_mismatch' };

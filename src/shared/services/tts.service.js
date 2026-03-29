@@ -22,8 +22,6 @@ export const generateSpeech = async (text) => {
 
   if (!response.ok) {
     const err = await response.text();
-    console.log(response);
-
     throw new Error(`Kokoro-TTS ${response.status}: ${err}`);
   }
 
