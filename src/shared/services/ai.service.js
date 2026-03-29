@@ -16,8 +16,6 @@ export const analyzeResume = async (cvText, hobby = '', candidateName = '') => {
     headers: {
       Authorization: `Bearer ${keyToUse}`,
       'Content-Type': 'application/json',
-      'HTTP-Referer': process.env.APP_URL ?? 'http://localhost:3000',
-      'X-Title': "AI'nFold",
     },
     body: JSON.stringify({
       model: 'openrouter/free',
