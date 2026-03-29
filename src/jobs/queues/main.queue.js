@@ -22,7 +22,7 @@ export const addJob = (name, data) => {
 
 export const addJobAnalysis = (name, data) => {
   return analysisQueue.add(name, data, {
-    attempts: 3,
+    attempts: 10,
     backoff: { type: 'exponential', delay: 1000 },
   });
 };

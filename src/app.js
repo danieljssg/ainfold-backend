@@ -2,22 +2,14 @@ import { RedisStore } from 'connect-redis';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
-import rateLimit from 'express-rate-limit';
 import session from 'express-session';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import apiRouter from './api/routes/router.js';
 import corsConfig from './config/corsConfig.js';
+import { limiter } from './config/limitter.js';
 import logger from './config/logger.js';
 import { SessionConnection } from './config/redis.js';
-
-const limiter = rateLimit({
-  windowMs: 5 * 60 * 1000,
-  max: 100,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: 'Demasiadas peticiones desde esta IP, por favor intenta de nuevo en unos minutos.',
-});
 
 const app = express();
 
@@ -32,10 +24,11 @@ app.use(
   }),
 );
 app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'combined'));
+app.set('trust proxy', 1);
+app.use(limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
-app.use(limiter);
 app.use(
   session({
     store: new RedisStore({ client: SessionConnection }),
@@ -50,7 +43,6 @@ app.use(
     },
   }),
 );
-app.set('trust proxy', 1);
 app.disable('x-powered-by');
 
 app.use((req, _res, next) => {

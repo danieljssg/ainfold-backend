@@ -7,10 +7,11 @@ import {
   submitAnalysis,
   getAudioTTS,
 } from './analyzes.controller.js';
+import { analysisLimitter } from '../../config/limitter.js';
 
 const router = Router();
 
-router.post('/', uploadPdf.single('cv'), submitAnalysis);
+router.post('/', [uploadPdf.single('cv'), analysisLimitter], submitAnalysis);
 router.get('/:analysisId/tts', getAudioTTS);
 router.post('/:analysisId/tts', generateTTS);
 
