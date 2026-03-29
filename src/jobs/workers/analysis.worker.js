@@ -6,7 +6,7 @@ import Analysis from '../../shared/models/Analysis.js';
 import Job from '../../shared/models/Job.js';
 import { analyzeResume } from '../../shared/services/ai.service.js';
 import { processPdfText } from '../../shared/services/pdf.service.js';
-import { fuzzyMatchName, hasProfanity } from '../../utils/texts.utils.js';
+import { fuzzyMatchName } from '../../utils/texts.utils.js';
 
 export const analysisWorker = new Worker(
   'analysisStream',
@@ -47,14 +47,7 @@ export const analysisWorker = new Worker(
         return { success: false, reason: 'ocr_required' };
       }
 
-      if (hasProfanity(candidateName) || hasProfanity(hobby)) {
-        await Job.findByIdAndUpdate(jobId, {
-          status: 'failed',
-          error: 'Se detectó lenguaje inapropiado en los datos ingresados. Por favor, verifica tu nombre o pasatiempo.',
-          completedAt: new Date(),
-        });
-        return { success: false, reason: 'profanity_detected' };
-      }
+
 
       const isValidName = fuzzyMatchName(candidateName, content);
       if (!isValidName) {
