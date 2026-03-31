@@ -200,7 +200,16 @@ export const purgeUserData = async (req, res) => {
       userId,
     });
 
-    res.clearCookie('x-csrf-token');
+    const cookieOptions = {
+      path: '/',
+      domain: process.env.NODE_ENV === 'production' ? '.spotzlabs.site' : undefined,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+      expires: new Date(0)
+    };
+
+    res.clearCookie('session_token', cookieOptions);
+    res.clearCookie('x-csrf-token', cookieOptions);
     return res.status(200).json({
       success: true,
       message: 'Logout successful',
