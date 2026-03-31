@@ -10,6 +10,7 @@ const doubleCsrfOptions = {
     secure: process.env.NODE_ENV === 'production',
     path: '/',
     maxAge: 24 * 60 * 60 * 1000,
+    domain: process.env.NODE_ENV === 'production' ? '.spotzlabs.site' : undefined,
   },
   getCsrfTokenFromRequest: (req) => req.headers['x-csrf-token'],
   ignoredMethods: ['GET', 'HEAD', 'OPTIONS'],
