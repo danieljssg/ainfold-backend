@@ -1,12 +1,14 @@
 import { Worker } from 'bullmq';
 import logger from '../../config/logger.js';
-import { WorkerConnection } from '../../config/redis.js';
+import { createBullMQConnection } from '../../config/redis.js';
 import { setJobProgress } from '../../modules/jobs/job.service.js';
 import Analysis from '../../shared/models/Analysis.js';
 import Job from '../../shared/models/Job.js';
 import { analyzeResume } from '../../shared/services/ai.service.js';
 import { processPdfText } from '../../shared/services/pdf.service.js';
 import { fuzzyMatchName } from '../../utils/texts.utils.js';
+
+const workerConnection = createBullMQConnection('worker:analysisStream');
 
 export const analysisWorker = new Worker(
   'analysisStream',
@@ -96,7 +98,7 @@ export const analysisWorker = new Worker(
     }
   },
   {
-    connection: WorkerConnection,
+    connection: workerConnection,
     concurrency: 3,
     removeOnComplete: { count: 100 },
     removeOnFail: { count: 500 },
@@ -109,4 +111,8 @@ analysisWorker.on('completed', (job) => {
 
 analysisWorker.on('failed', (job, err) => {
   logger.error(`[analysisWorker] Job ${job?.id} falló: ${err.message}`);
+});
+
+analysisWorker.on('error', (err) => {
+  logger.error(`[analysisWorker] Error interno: ${err.message}`);
 });

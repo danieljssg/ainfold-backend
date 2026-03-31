@@ -1,7 +1,9 @@
 import { Worker } from 'bullmq';
 import logger from '../../config/logger.js';
-import { WorkerConnection } from '../../config/redis.js';
+import { createBullMQConnection } from '../../config/redis.js';
 import User from '../../shared/models/User.js';
+
+const workerConnection = createBullMQConnection('worker:mainStream');
 
 const mainWorker = new Worker(
   'mainStream',
@@ -61,7 +63,7 @@ const mainWorker = new Worker(
     }
   },
   {
-    connection: WorkerConnection,
+    connection: workerConnection,
     concurrency: 5,
     removeOnComplete: { count: 100 },
     removeOnFail: { count: 500 },
@@ -74,6 +76,10 @@ mainWorker.on('completed', (job) => {
 
 mainWorker.on('failed', (job, err) => {
   logger.error(`❌ Tarea ${job.id} falló: ${err.message}`);
+});
+
+mainWorker.on('error', (err) => {
+  logger.error(`[mainWorker] Error interno: ${err.message}`);
 });
 
 export default mainWorker;

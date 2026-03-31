@@ -1,4 +1,5 @@
 import IoRedis from 'ioredis';
+import logger from './logger.js';
 
 const baseConfig = {
   host: process.env.VALKEY_HOST,
@@ -6,26 +7,57 @@ const baseConfig = {
   password: process.env.VALKEY_PASSWORD,
 };
 
-// 1. Conexión para Workers (BullMQ)
-export const WorkerConnection = new IoRedis({
-  ...baseConfig,
-  maxRetriesPerRequest: null,
-  enableReadyCheck: false,
-  retryStrategy: (times) => {
-    return Math.min(times * 500, 5000);
-  },
-});
+export function createBullMQConnection(label = 'bullmq') {
+  const conn = new IoRedis({
+    ...baseConfig,
+    maxRetriesPerRequest: null,
+    enableReadyCheck: false,
+    retryStrategy: (times) => {
+      const delay = Math.min(times * 500, 5000);
+      logger.warn(`[Redis:${label}] Reintentando conexión (intento ${times}, delay ${delay}ms)`);
+      return delay;
+    },
+    lazyConnect: false,
+  });
 
-// 2. Conexión para Caché de Requests
-export const CacheConnection = new IoRedis({
-  ...baseConfig,
-  maxRetriesPerRequest: 3,
-  connectTimeout: 5000,
-});
+  conn.on('connect', () => {
+    logger.info(`[Redis:${label}] ✅ Conectado Correctamente`);
+  });
 
-// 3. Conexión para express-session
-export const SessionConnection = new IoRedis({
-  ...baseConfig,
-  maxRetriesPerRequest: 3,
-  connectTimeout: 5000,
-});
+  conn.on('error', (err) => {
+    logger.error(`[Redis:${label}] ❌ Error de conexión: ${err.message}`);
+  });
+
+  conn.on('close', () => {
+    logger.warn(`[Redis:${label}] Conexión cerrada`);
+  });
+
+  return conn;
+}
+
+export function createServiceConnection(label = 'service') {
+  const conn = new IoRedis({
+    ...baseConfig,
+    maxRetriesPerRequest: 3,
+    connectTimeout: 5000,
+    retryStrategy: (times) => {
+      const delay = Math.min(times * 500, 5000);
+      logger.warn(`[Redis:${label}] Reintentando conexión (intento ${times}, delay ${delay}ms)`);
+      return delay;
+    },
+  });
+
+  conn.on('connect', () => {
+    logger.info(`[Redis:${label}] ✅ Conectado`);
+  });
+
+  conn.on('error', (err) => {
+    logger.error(`[Redis:${label}] ❌ Error: ${err.message}`);
+  });
+
+  return conn;
+}
+
+// Conexiones de servicio (singleton está OK para estos — un solo consumidor cada uno)
+export const CacheConnection = createServiceConnection('cache');
+export const SessionConnection = createServiceConnection('session');

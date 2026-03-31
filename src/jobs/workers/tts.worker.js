@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { Worker } from 'bullmq';
 import { randomUUID } from 'node:crypto';
 import logger from '../../config/logger.js';
-import { WorkerConnection } from '../../config/redis.js';
+import { createBullMQConnection } from '../../config/redis.js';
 import Analysis from '../../shared/models/Analysis.js';
 import AnalysisAudio from '../../shared/models/AnalysisAudio.js';
 import { generateSpeech } from '../../shared/services/tts.service.js';
@@ -13,6 +13,8 @@ const UPLOAD_DIR = '/app/public/uploads';
 if (!existsSync(UPLOAD_DIR)) {
   mkdirSync(UPLOAD_DIR, { recursive: true });
 }
+
+const workerConnection = createBullMQConnection('worker:audioStream');
 
 export const ttsWorker = new Worker(
   'audioStream',
@@ -56,7 +58,7 @@ export const ttsWorker = new Worker(
     }
   },
   {
-    connection: WorkerConnection,
+    connection: workerConnection,
     concurrency: 1,
     removeOnComplete: { count: 100 },
     removeOnFail: { count: 500 },
@@ -69,4 +71,8 @@ ttsWorker.on('completed', (job) => {
 
 ttsWorker.on('failed', (job, err) => {
   logger.error(`[ttsWorker] Job ${job?.id} falló: ${err.message}`);
+});
+
+ttsWorker.on('error', (err) => {
+  logger.error(`[ttsWorker] Error interno: ${err.message}`);
 });

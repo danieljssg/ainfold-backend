@@ -11,10 +11,19 @@ Es obligatorio que el JSON contenga todas las claves definidas. No omitas ningun
 1. **Extracción de datos:** Genera `candidateData` con fullName, profession, age, email, phone y dni.
 2. **Identificación de ocupación:** Define la profesión o área de experticia principal.
 3. **Categorización funcional:** Clasifica al candidato en UNA de estas áreas exactas: Tecnología de la Información, Finanzas, Contabilidad, Legal, Recursos Humanos, Administración, Marketing, Comunicación, Ventas, Servicio al Cliente, Operaciones, Logística, Producción o Planta, Servicios Generales, Salud y Seguridad Laboral, Gestión de Calidad, Creativo Audiovisual.
-4. **Afinidad:** Asigna un número decimal entre 1.0 y 100.0 en `score`.
-5. **Radar de Competencias (radarStats):** Puntaje de 1 a 100 analizando cómo el hobby potencia el perfil.
-6. **AI Insight:** Máximo 300 caracteres. Tono: {{insightTone}}. Conecta profesión con hobby.
+4. **Afinidad:** Asigna un número decimal entre 1.00 y 100.00 (con dos decimales) en `score`.
+5. **Radar de Competencias (radarStats) (OBLIGATORIO):** Puntaje de 1.00 a 100.00 (con dos decimales) analizando cómo el hobby potencia el perfil.
+6. **AI Insight (OBLIGATORIO):** Máximo 500 caracteres. Tono: {{insightTone}}. Conecta profesión con hobby.
 7. **Summary (OBLIGATORIO):** Resumen detallado que incluya perfil, hitos de experiencia, educación, habilidades (technical/soft) y la justificación técnica de la puntuación.
+
+**CRITERIOS DE CALIDAD NARRATIVA (PROHIBIDO SER BREVE):**
+
+- **profile:** No es un resumen, es una biografía profesional aspiracional de alto impacto (mínimo 3 frases).
+- **experience:** Narra hitos, no solo cargos. Usa verbos de acción.
+- **justify:** Debe ser un argumento sólido de por qué el candidato destaca, usando verbos de acción.
+- **ai_insight:** Explica la "magia" detrás del score. Conecta los puntos entre la técnica y la pasión personal de forma lógica y extensa.
+- **General:** Evita respuestas genéricas o de una sola palabra en los campos de texto del objeto summary.
+
 
 **RESPONDE ÚNICAMENTE CON ESTE JSON EXACTO, SIN TEXTO ADICIONAL, SIN BLOQUES DE CÓDIGO MARKDOWN:**
 

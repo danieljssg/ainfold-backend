@@ -26,7 +26,7 @@ El backend está diseñado bajo una premisa simple: **ningún proceso monolític
 
 En lugar de Redis, uso **Valkey**, el fork open source. Es 100% compatible con BullMQ y garantiza una arquitectura libre de restricciones de licenciamiento. Centralizar la lógica en colas permite que la API responda instantáneamente mientras el procesamiento pesado sucede en segundo plano.
 
-- **`analysisStream`:** Gestiona el procesamiento de CVs. Extrae texto (PDF Service con Unpdf) y llama a la IA (AI Service con OpenRouter). Concurrencia: 3 simultáneos para balancear velocidad y carga.
+- **`analysisStream`:** Gestiona el procesamiento de CVs. Extrae texto (PDF Service con Unpdf) y llama a la IA (AI Service con OpenRouter y Groq). Concurrencia: 3 simultáneos para balancear velocidad y carga.
 - **`audioStream`:** Pasa el `ai_insight` por el modelo Kokoro-TTS. Concurrencia forzada a **1 ejecucion simultánea** para proteger la estabilidad de la CPU/RAM en la instancia GP.Micro, evitando que el proceso de síntesis agote los recursos.
 - **`mainStream`:** Maneja tareas de soporte como logs de auditoría y actualizaciones de metadatos de usuario.
 
@@ -35,18 +35,19 @@ En lugar de Redis, uso **Valkey**, el fork open source. Es 100% compatible con B
 ## 🛡️ Seguridad y Resiliencia
 
 ### 🌐 Configuración de CORS y Rate Limitting
+
 Dado que operamos en una instancia **GP.Micro**, la protección de recursos es vital:
+
 - **CORS (`src/config/corsConfig.js`):** Configurado estrictamente para permitir solo orígenes autorizados con `credentials: true`. Esto es crucial para la seguridad de las sesiones basadas en cookies y evitar ataques CSRF.
 - **Rate Limiter (`src/config/limitter.js`):** Implementamos dos niveles:
   - **Global:** 100 peticiones cada 5 min para evitar abuso general.
-  - **Análisis:** Limitado a 5 peticiones cada 5 min. Esto previene que un solo usuario sature el motor de IA y el crédito de OpenRouter, además de proteger la CPU de picos de extracción de texto simultáneos.
+  - **Análisis:** Limitado a 5 peticiones cada 5 min. Esto previene que un solo usuario sature el motor de IA y los créditos de OpenRouter y Groq, además de proteger la CPU de picos de extracción de texto simultáneos.
 
 ---
 
-
 ## 🧠 Lógica de Negocio e IA
 
-- **IA Service (OpenRouter):** Construye prompts dinámicos inyectando el CV, el nombre y el hobby del candidato. Rota automáticamente API Keys para asegurar mayor disponibilidad.
+- **IA Service (OpenRouter y Groq):** Construye prompts dinámicos inyectando el CV, el nombre y el hobby del candidato. Rota automáticamente API Keys para asegurar mayor disponibilidad.
 - **TTS Service (Kokoro):** Motor de síntesis de voz autohospedado en la propia instancia. Los textos pasan por un diccionario fonético (`ttsDictionary.js`) que traduce anglicismos y tecnicismos al español para una pronunciación perfecta, por ejemplo "AI" se pronuncia "Ei Ai" y no "Ai".
 - **PDF Service:** Extracción de texto mediante `unpdf` con validación de integridad para detectar archivos corruptos o ilegibles. (como documentos escaneados o con imágenes)
 
@@ -88,6 +89,17 @@ Esta es la pieza clave: **Todo el ecosistema convive en una sola instancia de 2 
 - **Persistencia Compartida:** Se utiliza un directorio bindeado en la VM para que la API, el Worker y el Frontend puedan acceder a los archivos `.mp3` generados sin transferencias innecesarias.
 - **Seguridad Epímera:** Todos los registros (análisis, jobs, audios) tienen un **TTL de 1 hora** en MongoDB. Al ser una demo, la prioridad es la privacidad y la limpieza automática de datos.
 
+Distribución de recursos en la instancia GP.Micro (2 vCPU / 4 GB RAM):
+| Servicio | vCPU | RAM |
+| :--- | :--- | :--- |
+| frontend (Next.js) | 0.75 vCPU | 768 MB |
+| api (Express) | 0.5 vCPU | 512 MB |
+| worker (BullMQ + IA) | 1 vCPU | 1 GB |
+| kokoro-tts | 1 vCPU | 2 GB |
+| MongoDB | 0.25 vCPU | 512 MB |
+| Valkey/Redis | 0.15 vCPU | 256 MB |
+| worker-monitor | 0.15 vCPU | 128 MB |
+
 ---
 
 ## 🛠️ Instalación y Configuración
@@ -107,7 +119,6 @@ Esta es la pieza clave: **Todo el ecosistema convive en una sola instancia de 2 
     ```
 4.  **Ejecución del Sistema:**
     El backend se divide en dos procesos independientes que deben correr simultáneamente:
-
     - **Para la API (Servidor Express):**
       - Desarrollo: `pnpm run dev`
       - Producción: `pnpm run start`

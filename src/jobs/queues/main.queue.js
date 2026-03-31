@@ -1,16 +1,17 @@
 import { Queue } from 'bullmq';
-import { WorkerConnection } from '../../config/redis.js';
+import { createBullMQConnection } from '../../config/redis.js';
 
+// Each Queue gets its own dedicated Redis connection
 export const mainQueue = new Queue('mainStream', {
-  connection: WorkerConnection,
+  connection: createBullMQConnection('queue:mainStream'),
 });
 
 export const analysisQueue = new Queue('analysisStream', {
-  connection: WorkerConnection,
+  connection: createBullMQConnection('queue:analysisStream'),
 });
 
 export const addAudioQueue = new Queue('audioStream', {
-  connection: WorkerConnection,
+  connection: createBullMQConnection('queue:audioStream'),
 });
 
 export const addJob = (name, data) => {
